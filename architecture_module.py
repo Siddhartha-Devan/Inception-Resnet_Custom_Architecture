@@ -61,3 +61,55 @@ class ResidualBlock(Model):
         x = self.activation(x)
 
         return x
+
+
+
+class InceptionBlock(Model):
+    def __init__(self, n_filters):
+        super(InceptionBlock, self).__init__()
+        self.path1_conv1 = tf.keras.layers.Conv2D(kernel_size = (1,1), filters = n_filters, padding = 'same')
+        self.path1_conv2 = tf.keras.layers.Conv2D(kernel_size= (3,3), filters = n_filters, padding = 'same')
+        self.path1_bn = tf.keras.layers.BatchNormalization()
+
+
+        self.path2_conv1 = tf.keras.layers.Conv2D(kernel_size = (1,1), filters = n_filters*2, padding = 'same')
+        self.path2_conv2 = tf.keras.layers.Conv2D(kernel_size= (3,3), filters = n_filters*2, padding = 'same')
+        self.path2_bn = tf.keras.layers.BatchNormalization()
+
+        self.path3_conv1 = tf.keras.layers.Conv2D(kernel_size = (1,1), filters = n_filters//2, padding = 'same')
+        self.path3_conv2 = tf.keras.layers.Conv2D(kernel_size= (5,5), filters = n_filters//2, padding = 'same')
+        self.path3_bn = tf.keras.layers.BatchNormalization()
+
+        self.path4_pool = tf.keras.layers.MaxPooling2D(pool_size = (3,3), strides = (1,1), padding='same')
+        self.path4_conv1 = tf.keras.layers.Conv2D(kernel_size = (1,1), filters = n_filters, padding = 'same')
+        self.path4_bn = tf.keras.layers.BatchNormalization()
+
+        self.activation = tf.keras.layers.Activation('relu')
+
+        self.concat = tf.keras.layers.Concatenate()
+
+    
+    def call(self, inputs):
+        x1 = self.path1_conv1(inputs)
+        x1 = self.path1_conv2(x1)
+        x1 = self.path1_bn(x1)
+        x1 = self.activation(x1)
+
+        x2 = self.path2_conv1(inputs)
+        x2 = self.path2_conv2(x2)
+        x2 = self.path2_bn(x2)
+        x2 = self.activation(x2)
+
+        x3 = self.path3_conv1(inputs)
+        x3 = self.path3_conv2(x3)
+        x3 = self.path3_bn(x3)
+        x3 = self.activation(x3)
+
+        x4 = self.path4_pool(inputs)
+        x4 = self.path4_conv1(x4)
+        x4 = self.path4_bn(x4)
+        x4 = self.activation(x4)
+
+        outputs = self.concat([x1, x2, x3, x4])
+
+        return outputs
